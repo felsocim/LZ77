@@ -10,8 +10,12 @@ copie_tampon_L: .space 5
 copie_tampon_R: .space 6
 
 buffer: .space 2048
+bufferResult: .space 2048
 fnf: .asciiz "NOT FOUND"
 test: .asciiz "C:\\test.txt"
+parentheseGauche: .ascii "("
+parentheseDroite: .ascii ")"
+comma: .ascii ","
 
 .text
 .globl __start
@@ -44,14 +48,26 @@ li $a2 2000
 li $v0 14
 syscall
 
-li $a0 6
-
+#Initialize buffer
+li $a0 0
 jal ChargerTampons
 
-li $a0 1
-li $a1 3
+#Boucle de compression:
+Compresser:
+jal TamponLectureEstVide
+bne $v0 0 DechargerBuffer
+move $a0 $s1
+jal RechercheMotif
+j Compresser
 
-jal SousChaine
+#Ecriture dans le fichier:
+DechargerBuffer:
+move $a0 $s7
+la $a1 bufferResult
+li $a2 2000
+li $v0 15
+syscall
+
 
 jal FermerTout 
 
@@ -206,7 +222,7 @@ lw $ra 0($sp)
 addu $sp $sp 8 
 jr $ra
 
-SousChaine:
+SousChaineLecture:
 #Prologue:
 subu $sp $sp 12
 sw $a1 8($sp) #longueur
@@ -288,18 +304,18 @@ sw $s4 8($sp)
 sw $a1 4($sp)
 sw $ra 0($sp)
 #Corps:
-li $t0 0 #compteur a 0
-li $t1 0
-sub $t1 $s4 $a1
+li $t6 0 #compteur a 0
+li $t7 0
+sub $t7 $s4 $a1
 BoucleIndex:
-bge $t0 $t1 FinBoucleIndex
-move $a0 $t0
+bge $t6 $t7 ExistePas
+move $a0 $t6
 jal SousChaineRecherche
 move $a0 $a1
 jal ComparerChaines
 BoucleIndex2:
 beq $v0 1 FinTotale
-addi $t0 $t0 1
+addi $t6 $t6 1
 j BoucleIndex
 
 FinTotale:
@@ -320,4 +336,142 @@ lw $s4 8($sp)
 lw $a1 4($sp)
 lw $ra 0($sp)
 addu $sp $sp 12
+jr $ra
+
+#Appending character to resulting buffer
+AppendCharacterToResult:
+#Prologue:
+subu $sp $sp 8
+sw $a2 4($sp) #char to append
+sw $ra 0($sp)
+#Corps:
+li $t0 0 #compteur a 0
+AppendLoop:
+lb $t1 bufferResult($t0)
+beq $t1 0 Append
+addi $t0 $t0 1
+j AppendLoop
+Append:
+sb $a2 bufferResult($t0)
+#Epilogue:
+lw $a2 4($sp)
+lw $ra 0($sp)
+addu $sp $sp 8
+jr $ra
+
+#Recherche du motif le plus long a compresser
+#Params:
+#	-> $a0: position du milieu de la tete de lecture
+RechercheMotif:
+#Prologue:
+subu $sp $sp 8
+sw $a0 4($sp)
+sw $ra 0($sp)
+#Corps:
+li $t0 0 #compteur a 0
+move $t1 $s5
+BoucleMotif:
+blt $t1 1 PasDeMotif
+move $a1 $t1
+move $a0 $t0
+jal SousChaineLecture
+move $s2 $a1
+jal INDEX
+move $s3 $a0
+bne $v0 1 MotifTrouve
+addi $t0 $t0 1
+add $t2 $t1 $t0
+BoucleMotifImbriquee:
+bgt $t2 $s5 BoucleMotif
+move $a1 $t1
+move $a0 $t0
+jal SousChaineLecture
+move $s2 $a1
+jal INDEX
+move $s3 $a0
+bne $v0 1 MotifTrouve
+addi $t0 $t0 1
+addi $t2 $t2 1
+j BoucleMotifImbriquee
+subi $t1 $t1 1
+j BoucleMotif
+
+PasDeMotif:
+la $a2 parentheseGauche
+jal AppendCharacterToResult
+li $a2 0
+jal AppendCharacterToResult
+la $a2 comma
+jal AppendCharacterToResult
+li $a2 0
+jal AppendCharacterToResult
+la $a2 comma
+jal AppendCharacterToResult
+li $t0 0
+lb $a2 tampon_L($t0)
+jal AppendCharacterToResult
+la $a2 parentheseDroite
+jal AppendCharacterToResult
+li $t0 0
+lw $a0 4($sp)
+addi $a0 $a0 1
+jal ChargerTampons
+move $s1 $a0
+j EpilogueMotif
+
+MotifTrouve:
+la $a2 parentheseGauche
+jal AppendCharacterToResult
+move $a2 $s3
+jal AppendCharacterToResult
+la $a2 comma
+jal AppendCharacterToResult
+move $a2 $s2
+jal AppendCharacterToResult
+la $a2 comma
+jal AppendCharacterToResult
+add $t0 $s2 $s3
+lb $a2 tampon_L($t0)
+jal AppendCharacterToResult
+la $a2 parentheseDroite
+jal AppendCharacterToResult
+li $t0 0
+lw $a0 4($sp)
+addi $t0 $s2 1
+add $a0 $a0 $t0
+jal ChargerTampons
+move $s1 $a0
+j EpilogueMotif
+
+EpilogueMotif:
+lw $a0 4($sp)
+lw $ra 0($sp)
+addu $sp $sp 8
+jr $ra
+
+#Verifie si tampon_L est vide
+#Params: -> $s5: longueur du tampon_L
+TamponLectureEstVide:
+#Prologue:
+subu $sp $sp 8
+sw $s5 4($sp)
+sw $ra 0($sp)
+#Corps:
+li $t0 0
+EstVideBoucle:
+bge $t0 $s5 EstVide
+lb $t1 tampon_L($t0)
+bne $t1 0 NonVide
+addi $t0 $t0 1
+j EstVideBoucle
+NonVide:
+li $v0 0
+j EpilogueVide
+EstVide:
+li $v0 1
+j EpilogueVide
+EpilogueVide:
+lw $s5 4($sp)
+lw $ra 0($sp)
+addu $sp $sp 8
 jr $ra
