@@ -1,0 +1,92 @@
+******************************************************************************
+* PROJET D'ARCHITECTURE DES ORDINATEURS: COMPRESSION/DECOMPRESSION AVEC LZ77 *
+******************************************************************************
+
+	Ce fichier "readme.txt" contient les réponses aux questions de la section 3 du sujet
+	ainsi que la description des fonctionnalités que nous avons implémentées dans nos codes.
+	 _____________________________
+	|        NOTRE BINÔME:        |
+	|-----------------------------|
+	| Marek FELSOCI (CMI Réseaux) |
+	| Arnaud PINSUN (CMI Images)  |
+	|_____________________________|
+	
+	INFORMATION: L'archive contenant notre projet contient également des fichier de texte utilisés comme exemples de test.
+	Il y en a trois versions:
+	
+		* la version texte originale (à la fin des noms de fichiers originaux on a ajouté "_VersionOriginale" pour les distinguer)
+		* la version compressé (avec l'extension .lz77)
+		* la version décompressé (la version texte avec l'extension .txt et les mêmes noms que les fichiers compressés)
+	
+-------------------------------------
+| I REPONSES AUX QUESTIONS DU SUJET |
+-------------------------------------
+
+1. Le taux de compression est-il le même pour les trois fichiers .txt ? Pourquoi ?
+
+	Voici un tableau de comparaison pour illustrer notre réponse (avec 6 pour la taille du tampon de recherche
+	et 5 pour la taille du tampon de lecture comme demandé dans le sujet):
+	__________________________________________________________________________________________________
+	|                                 |                       |                   |                  |
+	|     Données / Nom du fichier    |   Lepetitprince.txt   |   Pirouette.txt   |   Voltaire.txt   |
+	|_________________________________|_______________________|___________________|__________________|
+	|                                 |                       |                   |                  |
+	|   Taille AVANT la compression   |     1 110 octets      |    1 043 octets   |   1 554 octets   |
+	|_________________________________|_______________________|___________________|__________________|
+	|                                 |                       |                   |                  |
+	|   Taille APRÈS la compression   |     2 472 octets      |    2 451 octets   |   3 519 octets   |
+	|_________________________________|_______________________|___________________|__________________|
+	|                                 |                       |                   |                  |
+	|      Taux de la compression     |        -122%          |       -135%       |      -126%       |
+	|_________________________________|_______________________|___________________|__________________|
+	
+	On peut observer dans le tableau ci-dessus que le taux de compression est le même à environ 10% près.
+	Le taux de compression reste le même puisqu'on utilise le même algorithme de compression avec les mêmes
+	paramètres pour les trois fichiers. Cependant le taux de compression peut légèrement varier d'un fichier
+	à l'autre (comme on le voit dans cet exemple c'est 10% de différence moyenne). Cette variation est due 
+	au contenu différent des trois fichiers. (Comme l'algorithme LZ77 utilise des motifs répétitifs pour réduire
+	la taille du fichier, la quantité des motifs trouvés et par conséquent la taille du fichier compressé dépend
+	du contenu de chacun de trois fichiers.)
+	
+2. La compression peut-elle être négative ? Si oui, dans quel cas ?
+
+	En effet, la compression peut très bien être négative. On le voit même dans l'exemple ci-dessus. 
+	En fait, la compression devient négative lorsque l'algorithme de compression ne trouve pas un nombre suffisant
+	des motifs répétitifs dans le fichier à compresser mais aussi lorsque la taille des tampons de recherche et de lecture
+	est trop petite (comme dans notre exemple).
+	
+3. Peut-on obtenir un meilleur taux de compression avec d'autres valeurs de N et/ou de F ?
+
+	On peut obtenir un meilleur taux de compression en choisissant des valeurs de N et de F considérablement plus grandes
+	que celles utilisées dans l'exemple ci-dessus.
+	
+4. Quels sont les points forts/faibles de l'algorithme LZ77 ?
+
+	L'algorithme de compression LZ77 est efficace pour la compression des fichiers assez grand où on a plus de chance de
+	trouver des motifs répétitifs. 
+
+	Par ailleurs lorsqu'on choisit des valeurs de N et de F trop petites alors, même pour les grands fichiers, l'algorithme 
+	LZ77 devient plus qu'inefficace car le taux de compression commence à prendre de très grandes valeurs négatives.
+	
+	
+-----------------------------------
+| II FONCTIONNALITES IMPLEMENTEES |
+-----------------------------------
+
+	Le compresseur dont le code se trouve dans le fichier "Compresseur.s" permet de compresser des fichiers de texte d'une taille
+	maximale de 9999. Au début du processus, le compresseur demande à l'utilisateur de choisir la taille pour les tampons de recherche
+	et de lecture (taille maximale pour les deux est de 500) ainsi que d'entrer le nom du fichier à compresser. Ce dernier
+	peut comporter jusqu'à 30 caractères (l'extension .txt comprise). 
+	
+	Le fichier compressé est ensuite enregistré dans le fichier du même nom que le fichier d'entrée mais avec l'extension .lz77.
+	
+	Le décompresseur dont le code se trouve dans le fichier "Decompresseur.s" permet de décompresser des fichiers de texte d'une taille
+	maximale de 9999. Au début du processus, le décompresseur demande à l'utilisateur de choisir la taille pour le tampon de recherche
+	(taille maximale est de 500 et doit être la même que l'on a choisi pour la compression du fichier) ainsi que d'entrer le nom du fichier 
+	à décompresser. Ce dernier peut comporter jusqu'à 30 caractères (l'extension .lz77 comprise).  
+	
+	Le fichier décompressé est ensuite enregistré dans le fichier du même nom que le fichier d'entrée mais sous le format standard .txt.
+	
+********************************************************************************************************************************************
+*                                                      FIN DU FICHIER "readme.txt"                                                         *
+********************************************************************************************************************************************
